@@ -15,7 +15,7 @@ int px = 0, py = 0;
 bool last_comm_wrong = false;
 
 inline void clrscr() {
-	system("cls");
+    system("cls");
 }
 
 void print_state(const State &state) {
@@ -80,7 +80,7 @@ void generate_map() {
     //TODO: gen lab
     for(int i = 0;i < 10;i++) {
         for(int j = 0;j < 10;j++) {
-			map[j][i] = (rand() % 10 < 3) ? 'W' : '_';
+            map[j][i] = (rand() % 10 < 3) ? 'W' : '_';
         }
     }
     map[0][0] = 'P';
@@ -94,14 +94,14 @@ void load_map() {
 
 int move(const int &dx, const int &dy) {
     if(px + dx < 0 ||
-	   px + dx >= SIZE_X ||
-	   py + dy < 0 ||
-	   py + dy >= SIZE_Y)
-		return 0;
-	if(map[px + dx][py + dy] == 'W') {
-		last_comm_wrong = true;
-		return 0;
-	}
+       px + dx >= SIZE_X ||
+       py + dy < 0 ||
+       py + dy >= SIZE_Y)
+        return 0;
+    if(map[px + dx][py + dy] == 'W') {
+        last_comm_wrong = true;
+        return 0;
+    }
     if(map[px + dx][py + dy] == 'E') return 2;
     swap(map[px][py], map[px + dx][py + dy]);
     px += dx;
