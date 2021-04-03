@@ -3,11 +3,8 @@
 
 using namespace std;
 
-enum State {
-    MENU,
-    GAME,
-    HELP
-};
+enum State {MENU, GAME, HELP};
+enum MoveState {NOPASS, MOVE, EXIT};
 
 const int SIZE_X = 10, SIZE_Y = 10;
 char map[SIZE_X][SIZE_Y];
@@ -33,20 +30,20 @@ void print_state(const State &state) {
                 for(int j = 0;j < 10;j++) {
                     cout << map[j][i];
                 }
-                cout << '\n';
+                cout << endl;
             }
             if(last_comm_wrong) {
-                cout << "You can't go this way\n";
+                cout << "You can't go this way" << endl;
                 last_comm_wrong = false;
             }
             break;
         }
         case (HELP) : {
-            cout << "Controlling:\n";
-            cout << "    Moving:\n";
-            cout << "        L - Left, R - Right\n";
-            cout << "        U - Up, D - Down\n";
-            cout << "    M - Menu\n";
+            cout << "Controlling:" << endl;
+            cout << "    Moving:" << endl;
+            cout << "        L - Left, R - Right" << endl;
+            cout << "        U - Up, D - Down" << endl;
+            cout << "    M - Menu" << endl;
             break;
         }
     }
@@ -78,8 +75,8 @@ bool test_comm_and_state(const string &comm, const State &state) {
 
 void generate_map() {
     //TODO: gen lab
-    for(int i = 0;i < 10;i++) {
-        for(int j = 0;j < 10;j++) {
+    for(int i = 0;i < SIZE_Y;i++) {
+        for(int j = 0;j < SIZE_X;j++) {
             map[j][i] = (rand() % 10 < 3) ? 'W' : '_';
         }
     }
@@ -92,21 +89,18 @@ void load_map() {
     generate_map();
 }
 
-int move(const int &dx, const int &dy) {
+MoveState move(const int &dx, const int &dy) {
     if(px + dx < 0 ||
        px + dx >= SIZE_X ||
        py + dy < 0 ||
-       py + dy >= SIZE_Y)
-        return 0;
-    if(map[px + dx][py + dy] == 'W') {
-        last_comm_wrong = true;
-        return 0;
-    }
-    if(map[px + dx][py + dy] == 'E') return 2;
+       py + dy >= SIZE_Y ||
+       map[px + dx][py + dy] == 'W')
+        return NOPASS;
+    if(map[px + dx][py + dy] == 'E') return EXIT;
     swap(map[px][py], map[px + dx][py + dy]);
     px += dx;
     py += dy;
-    return 1;
+    return MOVE;
 }
 
 int main() {
@@ -120,7 +114,7 @@ int main() {
         cout << "> ";
         cin >> c;
         while(!test_comm_and_state(c, state)) {
-            cout << "Wrong command, try again\n";
+            cout << "Wrong command, try again" << endl;
             cout << "> ";
             cin >> c;
         }
@@ -155,9 +149,9 @@ int main() {
                             move_state = move(0, +1);
                         }
                     }
-                    if(move_state == 0) {
+                    if(move_state == NOPASS) {
                         last_comm_wrong = true;
-                    } else if(move_state == 2) {
+                    } else if(move_state == EXIT) {
                         //TODO: Win state
                         state = MENU;
                         px = 0;
