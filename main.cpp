@@ -1,13 +1,17 @@
-#include <iostream>
 #include <ctime>
+#include <iostream>
+#include <algorithm>
 
 using namespace std;
 
 enum State {MENU, GAME, HELP};
-enum MoveState {NOPASS, MOVE, EXIT};
+enum CellType {WALL, FREE_SPACE, EXIT};
+enum MoveType {MOVED, NOPASS, EXITED};
 
 const int SIZE_X = 10, SIZE_Y = 10;
 char map[SIZE_X][SIZE_Y];
+State state = MENU;
+bool game = true;
 int px = 0, py = 0;
 bool last_comm_wrong = false;
 
@@ -43,6 +47,8 @@ void print_state(const State &state) {
             cout << "    Moving:" << endl;
             cout << "        L - Left, R - Right" << endl;
             cout << "        U - Up, D - Down" << endl;
+            cout << "        You can FREE_SPACE several times like this:" << endl;
+            cout << "            RRRRDDRRDDLD" << endl;
             cout << "    M - Menu" << endl;
             break;
         }
@@ -51,30 +57,19 @@ void print_state(const State &state) {
 
 bool test_comm_and_state(const string &comm, const State &state) {
     switch(state) {
-        case (MENU) : {
-            return (comm == "S" || comm == "C" || comm == "H" || comm == "Q");
-        }
-        case (GAME) : {
-            if(comm == "M") {
-                return true;
-            } else {
-                for(const char &e : comm) {
-                    if(e != 'L' && e != 'R' && e != 'U' && e != 'D') {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-        case (HELP) : {
-            return true;
-        }
+        case (MENU) : return (comm == "S" || comm == "C" || comm == "H" || comm == "Q");
+        case (GAME) : return (comm == "M") ^ all_of(comm.begin(), comm.end(), [](const char &e) {
+            return (e == 'L' || e == 'R' || e == 'U' || e == 'D');
+        });
+        case (HELP) : return true;
     }
     return false;
 }
 
 void generate_map() {
     //TODO: gen lab
+    px = 0;
+    py = 0;
     for(int i = 0;i < SIZE_Y;i++) {
         for(int j = 0;j < SIZE_X;j++) {
             map[j][i] = (rand() % 10 < 3) ? 'W' : '_';
@@ -89,35 +84,58 @@ void load_map() {
     generate_map();
 }
 
-MoveState move(const int &dx, const int &dy) {
-    if(px + dx < 0 ||
-       px + dx >= SIZE_X ||
-       py + dy < 0 ||
-       py + dy >= SIZE_Y ||
-       map[px + dx][py + dy] == 'W')
-        return NOPASS;
-    if(map[px + dx][py + dy] == 'E') return EXIT;
-    swap(map[px][py], map[px + dx][py + dy]);
-    px += dx;
-    py += dy;
-    return MOVE;
+CellType get_cell(const int &x, const int &y) {
+    if(x < 0 || x >= SIZE_X ||
+       y < 0 || y >= SIZE_Y ||
+       map[x][y] == 'W')
+        return WALL;
+    return map[x][y] == 'E' ? EXIT : FREE_SPACE;
+}
+
+int decide(const char &value, const char &first, const char &second) {
+    if (value == first || value == second)
+        return (value == first) ? -1 : 1;
+    return 0;
+}
+
+MoveType move(const char &dir) {
+    const int dx = decide(dir, 'L', 'R');
+    const int dy = decide(dir, 'U', 'D');
+    const int new_x = px + dx;
+    const int new_y = py + dy;
+    const CellType next_cell = get_cell(new_x, new_y);
+    switch (next_cell) {
+        case (WALL) : return NOPASS;
+        case (EXIT) : return EXITED;
+        case (FREE_SPACE) : {
+            swap(map[px][py], map[new_x][new_y]);
+            px = new_x;
+            py = new_y;
+            return MOVED;
+        }
+    }
+    return EXITED; // Unreachable
+}
+
+string get_input() {
+    string input;
+    cout << "> ";
+    cin >> input;
+    while(!test_comm_and_state(input, state)) {
+        cout << "Wrong command, try again" << endl;
+        cout << "> ";
+        cin >> input;
+    }
+    return input;
 }
 
 int main() {
     srand(time(NULL));
     string c;
-    State state = MENU;
-    bool game = true;
     while(game) {
         clrscr();
         print_state(state);
-        cout << "> ";
-        cin >> c;
-        while(!test_comm_and_state(c, state)) {
-            cout << "Wrong command, try again" << endl;
-            cout << "> ";
-            cin >> c;
-        }
+        c = get_input();
         switch(state) {
             case (MENU) : {
                 if(c == "S") {
@@ -131,31 +149,21 @@ int main() {
                 } else if(c == "Q") {
                     game = false;
                 }
-                break;
+                break; // Unreachable
             }
             case (GAME) : {
                 if(c == "M") {
                     state = MENU;
                 } else {
-                    int move_state;
+                    MoveType move_type;
                     for(const char &e : c) {
-                        if(e == 'L') {
-                            move_state = move(-1, 0);
-                        } else if(e == 'R') {
-                            move_state = move(+1, 0);
-                        } else if(e == 'U') {
-                            move_state = move(0, -1);
-                        } else if(e == 'D') {
-                            move_state = move(0, +1);
-                        }
+                        move_type = move(e);
                     }
-                    if(move_state == NOPASS) {
+                    if(move_type == NOPASS) {
                         last_comm_wrong = true;
-                    } else if(move_state == EXIT) {
+                    } else if(move_type == EXITED) {
                         //TODO: Win state
                         state = MENU;
-                        px = 0;
-                        py = 0;
                     }
                 }
                 break;
