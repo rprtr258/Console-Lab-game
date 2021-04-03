@@ -1,8 +1,5 @@
 #include <iostream>
-#include <string>
-#include <cstdlib>
 #include <ctime>
-#include <windows.h>
 
 using namespace std;
 
@@ -18,18 +15,17 @@ int px = 0, py = 0;
 bool last_comm_wrong = false;
 
 inline void clrscr() {
-    static string cls = string(100, '\n');
-    cout << cls;
+	system("cls");
 }
 
 void print_state(const State &state) {
     switch(state) {
         case (MENU) : {
-            cout << "Labyrinth game\n";
-            cout << "   >Start - S\n";
-            cout << "   >Continue - C\n";
-            cout << "   >Help - H\n";
-            cout << "   >Quit - Q\n";
+            cout << "Labyrinth game" << endl;
+            cout << "   [S] Start" << endl;
+            cout << "   [C] Continue" << endl;
+            cout << "   [H] Help" << endl;
+            cout << "   [Q] Quit" << endl;
             break;
         }
         case (GAME) : {
@@ -59,11 +55,7 @@ void print_state(const State &state) {
 bool test_comm_and_state(const string &comm, const State &state) {
     switch(state) {
         case (MENU) : {
-            if(comm == "S" || comm == "C" || comm == "H" || comm == "Q") {
-                return true;
-            } else {
-                return false;
-            }
+            return (comm == "S" || comm == "C" || comm == "H" || comm == "Q");
         }
         case (GAME) : {
             if(comm == "M") {
@@ -88,11 +80,7 @@ void generate_map() {
     //TODO: gen lab
     for(int i = 0;i < 10;i++) {
         for(int j = 0;j < 10;j++) {
-            if(rand() % 10 < 3) {
-                map[j][i] = 'W';
-            } else {
-                map[j][i] = '_';
-            }
+			map[j][i] = (rand() % 10 < 3) ? 'W' : '_';
         }
     }
     map[0][0] = 'P';
@@ -105,11 +93,16 @@ void load_map() {
 }
 
 int move(const int &dx, const int &dy) {
-    if(px + dx < 0 || px + dx >= SIZE_X) return 0;
-    if(py + dy < 0 || py + dy >= SIZE_Y) return 0;
-    if(map[px + dx][py + dy] == 'E') {
-        return 2;
-    }
+    if(px + dx < 0 ||
+	   px + dx >= SIZE_X ||
+	   py + dy < 0 ||
+	   py + dy >= SIZE_Y)
+		return 0;
+	if(map[px + dx][py + dy] == 'W') {
+		last_comm_wrong = true;
+		return 0;
+	}
+    if(map[px + dx][py + dy] == 'E') return 2;
     swap(map[px][py], map[px + dx][py + dy]);
     px += dx;
     py += dy;
@@ -122,7 +115,7 @@ int main() {
     State state = MENU;
     bool game = true;
     while(game) {
-        system("cls");
+        clrscr();
         print_state(state);
         cout << "> ";
         cin >> c;
