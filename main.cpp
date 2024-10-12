@@ -16,7 +16,7 @@ int px = 0, py = 0;
 bool last_comm_wrong = false;
 
 inline void clrscr() {
-    system("cls");
+    cout << "\033[2J\033[1;1H";
 }
 
 void print_state(const State &state) {
